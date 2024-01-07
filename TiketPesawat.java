@@ -2,12 +2,14 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.sql.*;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 public class TiketPesawat extends JFrame {
-    private static final String DATABASE_PATH = ".tiketPesawat.db"; // Lokasi Database
+    private static final String DATABASE_PATH = "./tiketPesawat.db"; // Lokasi Database
     private static String username = "admin"; // Login Admin dengan username default (admin)
     private static String password = "admin"; // Login Admin dengan password default (admin)
     public static void main(String[] args) {
@@ -28,7 +30,8 @@ public class TiketPesawat extends JFrame {
                 "Nama VALCHAR(255)," +
                 "Kelas VALCHAR(255)," +
                 "Tujuan VALCHAR(255)," +
-                "Tanggal VALCHAR(255)," +
+                "Tanggal_Pesan VALCHAR(255)," +
+                "Tanggal_Berangkat VALCHAR(255)," +
                 "Jam INTEGER," +
                 "Jumlah INTEGER," +
                 "Harga INTEGER" +
@@ -106,20 +109,38 @@ public class TiketPesawat extends JFrame {
     }
 
     /**
+     * Mengambil total tanggal pada bulan sekarang
+     * @return total tanggal pada bulan sekarang
+     */
+    private static int getTotalDate() {
+        GregorianCalendar date = new GregorianCalendar();
+
+        int month = date.get(Calendar.MONTH);
+        int year = date.get(Calendar.YEAR);
+
+        YearMonth yearMonthObject = YearMonth.of(year, month + 1);
+        int jumlahHari = yearMonthObject.lengthOfMonth();
+
+        return jumlahHari;
+    }
+
+    /**
      * Mengecek apakah waktu keberangkatan sudah lewat atau belum
      * Membandingan waktu keberangkatan dengan waktu sekarang
      */
-    private static void checkWaktuKeberangkatan(int jam) {
+    private static void checkWaktuKeberangkatan(int jam, String tanggal) {
         GregorianCalendar date = new GregorianCalendar();
-
-        /** Membuat Variable untuk Format Jam */
-        String strJam = String.valueOf(jam < 10 ? "0" + jam : jam);
-        String formatJam = date.get(Calendar.HOUR_OF_DAY) < 10 ? "0" + date.get(Calendar.HOUR_OF_DAY) : Integer.toString(date.get(Calendar.HOUR_OF_DAY));
-        String formatMenit = date.get(Calendar.MINUTE) < 10 ? "0" + date.get(Calendar.MINUTE) : Integer.toString(date.get(Calendar.MINUTE));
+        
+        /** Membuat Variable untuk Format Tanggal */
+        String formatJam = String.valueOf(jam < 10 ? "0" + jam : jam) + ":00";
+        String formatBulan = String.valueOf(date.get(Calendar.MONTH) + 1 < 10 ? "0" + (date.get(Calendar.MONTH) + 1) : (date.get(Calendar.MONTH) + 1));
+        String formatTanggal = String.valueOf(date.get(Calendar.DAY_OF_MONTH) < 10 ? "0" + tanggal.split(" ")[0] : tanggal.split(" ")[0]);
+        String formatTanggal2 = date.get(Calendar.YEAR) + "-" + formatBulan + "-" + formatTanggal;
 
         /** Parsing Waktu Keberangkatan dan Waktu Sekarang */
-        LocalTime waktuKeberangkatan = LocalTime.parse(strJam + ":00");
-        LocalTime waktuSekarang = LocalTime.parse(formatJam + ":" + formatMenit);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        LocalDateTime waktuSekarang = LocalDateTime.now();
+        LocalDateTime waktuKeberangkatan = LocalDateTime.parse(formatTanggal2 + " " + formatJam, formatter);
 
         /** Jika Waktu Sekarang Melebihi Waktu Keberangkatan Maka Akan Kembali Ke Main Menu */
         if (waktuSekarang.isAfter(waktuKeberangkatan)) {
@@ -229,19 +250,27 @@ public class TiketPesawat extends JFrame {
         try {
             /** Membuat Pilihan Tujuan dan Jam */
             String[] tujuanArray = {"Jakarta", "Surabaya", "Bali", "Medan", "Makassar"};
-            String[] jamArray = {"08.00", "14.00", "18.00", "23.00"};
+            String[] jamArray = {"08.00", "14.00", "18.00", "22.00"};
+            String[] tanggalArray = new String[getTotalDate()];
+            String[] kelasArray = {"VIP", "REGULER"};
+
+            /** Membuat Array Tanggal */
+            for (int i = 0; i < tanggalArray.length; i++) {
+                tanggalArray[i] = Integer.toString(i + 1) + " " + getDate().split(" ")[1] + " " + getDate().split(" ")[2];
+            }
             
-            /** Membuat ComboBox Tujuan dan Jam */
+            /** Membuat ComboBox Tujuan, Jam, dan Tanggal */
             JComboBox<String> tujuanComboBox = new JComboBox<>(tujuanArray);
             JComboBox<String> jamComboBox = new JComboBox<>(jamArray);
+            JComboBox<String> tanggalComboBox = new JComboBox<>(tanggalArray);
+            JComboBox<String> kelasComboBox = new JComboBox<>(kelasArray);
             
-            /** Membuat Field Nama, Kelas, dan Jumlah */
+            /** Membuat Field Nama, Tanggal, Kelas, dan Jumlah */
             JTextField namaField = new JTextField();
-            JTextField kelasField = new JTextField();
             JTextField jumlahField = new JTextField();
 
-            Object[] fields = {"Tujuan:", tujuanComboBox, "Jam:", jamComboBox,
-                    "Nama:", namaField, "Kelas (VIP|REGULER):", kelasField, "Jumlah:", jumlahField};
+            Object[] fields = {"Tujuan:", tujuanComboBox, "Jam:", jamComboBox, "Tanggal:", tanggalComboBox,
+                    "Nama:", namaField, "Kelas:", kelasComboBox, "Jumlah:", jumlahField};
 
             /** Menampilkan GUI Input Data Tiket */
             int option = JOptionPane.showConfirmDialog(null, fields, "Input Data Tiket", JOptionPane.OK_CANCEL_OPTION);
@@ -250,9 +279,10 @@ public class TiketPesawat extends JFrame {
                 /** Parsing Tujuan dan Jam */
                 String tujuan = (String) tujuanComboBox.getSelectedItem();
                 int jam = Integer.parseInt(((String) jamComboBox.getSelectedItem()).split("\\.")[0]);
+                String tanggal = (String) tanggalComboBox.getSelectedItem();
 
                 /** Mengecek Waktu Keberangkatan */
-                checkWaktuKeberangkatan(jam);
+                checkWaktuKeberangkatan(jam, tanggal);
 
                 int harga = 0;
                 /** Mengecek Tujuan */
@@ -280,7 +310,7 @@ public class TiketPesawat extends JFrame {
 
                 /** Parsing Nama, Kelas, dan Jumlah */
                 String nama = namaField.getText();
-                String kelas = kelasField.getText();
+                String kelas = (String) kelasComboBox.getSelectedItem();
                 int jumlah = Integer.parseInt(jumlahField.getText());
 
                 /** Harga Menyesuaikan Kelas */
@@ -296,9 +326,9 @@ public class TiketPesawat extends JFrame {
                     return;
                 }
 
-                String tanggal = getDate();
+                String tanggal2 = getDate();
                 /** Memasukkan Data Tiket ke Database */
-                String sql = "INSERT INTO Tiket (Nama, Kelas, Tujuan, Tanggal, Jam, Jumlah, Harga) VALUES ('" + nama + "', '" + kelas + "', '" + tujuan + "', '" + tanggal + "', '" + jam + "', '" + jumlah + "', '" + harga + "');";
+                String sql = "INSERT INTO Tiket (Nama, Kelas, Tujuan, Tanggal_Pesan, Tanggal_Berangkat, Jam, Jumlah, Harga) VALUES ('" + nama + "', '" + kelas + "', '" + tujuan + "', '" + tanggal + "', '" + tanggal2 + "', '" + jam + "', '" + jumlah + "', '" + harga + "');";
                 s.execute(sql);
 
                 /** Membuat Pilihan untuk Menu GUI */
@@ -330,8 +360,8 @@ public class TiketPesawat extends JFrame {
             ResultSet r = s.executeQuery("SELECT * FROM Tiket;");
 
             /** Membuat List Kolom Untuk GUI */
-            String[] columnNames = {"ID", "Nama", "Kelas", "Tujuan", "Tanggal", "Jam", "Jumlah", "Harga", "Total Harga"};
-            Object[][] data = new Object[100][9]; // Membuat Array 2D untuk Menyimpan Data Tiket
+            String[] columnNames = {"ID", "Nama", "Kelas", "Tujuan", "Tanggal Pesan", "Tanggal Berangkat", "Jam", "Jumlah", "Harga", "Total Harga"};
+            Object[][] data = new Object[100][10]; // Membuat Array 2D untuk Menyimpan Data Tiket
 
             int i = 0;
             /** Memasukkan Data Tiket ke Array 2D */
@@ -340,11 +370,12 @@ public class TiketPesawat extends JFrame {
                 data[i][1] = r.getString("Nama");
                 data[i][2] = r.getString("Kelas");
                 data[i][3] = r.getString("Tujuan");
-                data[i][4] = r.getString("Tanggal");
-                data[i][5] = r.getInt("Jam");
-                data[i][6] = r.getInt("Jumlah");
-                data[i][7] = r.getInt("Harga");
-                data[i][8] = r.getInt("Jumlah") * r.getInt("Harga");
+                data[i][4] = r.getString("Tanggal_Pesan");
+                data[i][5] = r.getString("Tanggal_Berangkat");
+                data[i][6] = r.getInt("Jam");
+                data[i][7] = r.getInt("Jumlah");
+                data[i][8] = r.getInt("Harga");
+                data[i][9] = r.getInt("Jumlah") * r.getInt("Harga");
                 i++;
             }
 
@@ -359,7 +390,7 @@ public class TiketPesawat extends JFrame {
 
             /** Membuat ScrollPane untuk Menampilkan Data Tiket */
             JScrollPane scrollPane = new JScrollPane(table);
-            scrollPane.setPreferredSize(new java.awt.Dimension(800, 400)); // Ukuran ScrollPane
+            scrollPane.setPreferredSize(new java.awt.Dimension(1000, 400)); // Ukuran ScrollPane
 
             /** Membuat Panel untuk Judul */
             JPanel titlePanel = new JPanel();
@@ -407,7 +438,7 @@ public class TiketPesawat extends JFrame {
             int id = Integer.parseInt(idField.getText());
             
             /** Membuat List untuk Memilih Data Tiket yang ingin diupdate */
-            String[] columnNames = {"Nama", "Kelas", "Tujuan", "Tanggal", "Jam", "Jumlah", "Harga"};
+            String[] columnNames = {"Nama", "Kelas", "Tujuan", "Tanggal Berangkat", "Jam", "Jumlah", "Harga"};
 
             /** Menampilkan GUI */
             int pilihan = JOptionPane.showOptionDialog(null, "Pilih Data Tiket yang ingin diupdate", "Update Data Tiket",
@@ -421,9 +452,23 @@ public class TiketPesawat extends JFrame {
                     s.execute(sql);
                     break;
                 case 1:
-                    String kelas = JOptionPane.showInputDialog(null, "Masukkan Kelas Baru:", "Update Data Tiket", JOptionPane.PLAIN_MESSAGE);
-                    sql = "UPDATE Tiket SET Kelas = '" + kelas + "' WHERE ID = " + id + ";";
-                    s.execute(sql);
+                    String[] kelasArray = {"VIP", "REGULER"};
+
+                    /** Membuat ComboBox Kelas */
+                    JComboBox<String> kelasComboBox = new JComboBox<>(kelasArray);
+
+                    Object[] fields1 = {"Kelas:", kelasComboBox};
+
+                    /** Menampilkan GUI Update Kelas */
+                    option = JOptionPane.showConfirmDialog(null, fields1, "Update Kelas", JOptionPane.OK_CANCEL_OPTION);
+
+                    /** Parsing Kelas */
+                    String kelas = (String) kelasComboBox.getSelectedItem();
+
+                    if (option == JOptionPane.OK_OPTION) {
+                        sql = "UPDATE Tiket SET Kelas = '" + kelas + "' WHERE ID = " + id + ";";
+                        s.execute(sql);
+                    }
                     break;
                 case 2:
                     String tujuan = JOptionPane.showInputDialog(null, "Masukkan Tujuan Baru:", "Update Data Tiket", JOptionPane.PLAIN_MESSAGE);
@@ -431,14 +476,43 @@ public class TiketPesawat extends JFrame {
                     s.execute(sql);
                     break;
                 case 3:
-                    String tanggal = JOptionPane.showInputDialog(null, "Masukkan Tanggal Baru:", "Update Data Tiket", JOptionPane.PLAIN_MESSAGE);
-                    sql = "UPDATE Tiket SET Tanggal = '" + tanggal + "' WHERE ID = " + id + ";";
-                    s.execute(sql);
+                    String[] tanggalArray = new String[getTotalDate()];
+
+                    /** Membuat Array Tanggal */
+                    for (int i = 0; i < tanggalArray.length; i++) {
+                        tanggalArray[i] = Integer.toString(i + 1) + " " + getDate().split(" ")[1] + " " + getDate().split(" ")[2];
+                    }
+                    
+                    /** Membuat ComboBox Tanggal */
+                    JComboBox<String> tanggalComboBox = new JComboBox<>(tanggalArray);
+
+                    Object[] fields2 = {"Tanggal:", tanggalComboBox};
+
+                    /** Menampilkan GUI Update Tanggal */
+                    option = JOptionPane.showConfirmDialog(null, fields2, "Update Tanggal", JOptionPane.OK_CANCEL_OPTION);
+                    int tanggal = Integer.parseInt(((String) tanggalComboBox.getSelectedItem()).split(" ")[0]);
+
+                    if (option == JOptionPane.OK_OPTION) {
+                        sql = "UPDATE Tiket SET Tanggal_Berangkat = '" + tanggal + "' WHERE ID = " + id + ";";
+                        s.execute(sql);
+                    }
                     break;
                 case 4:
-                    String jam = JOptionPane.showInputDialog(null, "Masukkan Jam Baru:", "Update Data Tiket", JOptionPane.PLAIN_MESSAGE);
-                    sql = "UPDATE Tiket SET Jam = '" + jam + "' WHERE ID = " + id + ";";
-                    s.execute(sql);
+                    String[] jamArray = {"08.00", "14.00", "18.00", "22.00"};
+
+                    /** Membuat ComboBox Jam */
+                    JComboBox<String> jamComboBox = new JComboBox<>(jamArray);
+
+                    Object[] fields3 = {"Jam:", jamComboBox};
+
+                    /** Menampilkan GUI Update Jam */
+                    option = JOptionPane.showConfirmDialog(null, fields3, "Update Jam", JOptionPane.OK_CANCEL_OPTION);
+                    int jam = Integer.parseInt(((String) jamComboBox.getSelectedItem()).split("\\.")[0]);
+
+                    if (option == JOptionPane.OK_OPTION) {
+                        sql = "UPDATE Tiket SET Jam = '" + jam + "' WHERE ID = " + id + ";";
+                        s.execute(sql);
+                    }
                     break;
                 case 5:
                     String jumlah = JOptionPane.showInputDialog(null, "Masukkan Jumlah Baru:", "Update Data Tiket", JOptionPane.PLAIN_MESSAGE);
@@ -456,6 +530,7 @@ public class TiketPesawat extends JFrame {
         }
     }
 
+    /** Update Data Admin */
     private static void updateDataAdmin(Statement s) {
         try {
             /** Membuat Field Username & Password */
