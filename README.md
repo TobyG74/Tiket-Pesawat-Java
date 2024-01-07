@@ -52,6 +52,16 @@ private static String getDate() {
 }
 ```
 
+### getTotalDate
+
+-   Mendapatkan Total Tanggal dari Bulan saat ini
+
+```java
+private static String getTotalDate() {
+    ...
+}
+```
+
 ### checkWaktuKeberangkatan
 
 -   Mengecek Waktu Keberangkatan dengan Waktu Saat Melakukan Order
