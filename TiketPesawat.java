@@ -421,10 +421,10 @@ public class TiketPesawat extends JFrame {
         try {
             /** Membuat Field ID */
             JTextField idField = new JTextField();
-            Object[] fields = {"Masukkan ID Tiket yang ingin dihapus:", idField}; // Mengatur Field ID
+            Object[] fields = {"Masukkan ID Tiket yang ingin diupdate:", idField}; // Mengatur Field ID
 
             /** Menampilkan GUI */
-            int option = JOptionPane.showConfirmDialog(null, fields, "Hapus Data Tiket", JOptionPane.OK_CANCEL_OPTION);
+            int option = JOptionPane.showConfirmDialog(null, fields, "Update Data Tiket", JOptionPane.OK_CANCEL_OPTION);
 
             /** 
              * Mengecek Pilihan GUI
