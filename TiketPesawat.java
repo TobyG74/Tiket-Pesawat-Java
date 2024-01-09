@@ -489,8 +489,17 @@ public class TiketPesawat {
                     Object[] fields2 = {"Tanggal:", tanggalComboBox};
 
                     /** Menampilkan GUI Update Tanggal */
-                    option = JOptionPane.showConfirmDialog(null, fields2, "Update Tanggal", JOptionPane.OK_CANCEL_OPTION);
-                    int tanggal = Integer.parseInt(((String) tanggalComboBox.getSelectedItem()).split(" ")[0]);
+                    option = JOptionPane.showConfirmDialog(null, fields2, "Update Tanggal Berangkat", JOptionPane.OK_CANCEL_OPTION);
+                    String tanggal = (String) tanggalComboBox.getSelectedItem();
+
+                    sql = "SELECT * FROM Tiket WHERE ID = " + id + ";";
+                    ResultSet r = s.executeQuery(sql);
+
+                    /** Parsing Jam */
+                    int jam = r.getInt("Jam");
+
+                    /** Mengecek Waktu Keberangkatan */
+                    checkWaktuKeberangkatan(jam, tanggal);
 
                     if (option == JOptionPane.OK_OPTION) {
                         sql = "UPDATE Tiket SET Tanggal_Berangkat = '" + tanggal + "' WHERE ID = " + id + ";";
@@ -507,10 +516,10 @@ public class TiketPesawat {
 
                     /** Menampilkan GUI Update Jam */
                     option = JOptionPane.showConfirmDialog(null, fields3, "Update Jam", JOptionPane.OK_CANCEL_OPTION);
-                    int jam = Integer.parseInt(((String) jamComboBox.getSelectedItem()).split("\\.")[0]);
+                    int jam2 = Integer.parseInt(((String) jamComboBox.getSelectedItem()).split("\\.")[0]);
 
                     if (option == JOptionPane.OK_OPTION) {
-                        sql = "UPDATE Tiket SET Jam = '" + jam + "' WHERE ID = " + id + ";";
+                        sql = "UPDATE Tiket SET Jam = '" + jam2 + "' WHERE ID = " + id + ";";
                         s.execute(sql);
                     }
                     break;
@@ -604,7 +613,7 @@ public class TiketPesawat {
             ResultSet r = s.executeQuery("SELECT * FROM Tiket;");
 
             /** Membuat List Kolom Untuk GUI */
-            String[] columnNames = {"ID", "Nama", "Kelas", "Tujuan", "Tanggal", "Jam", "Jumlah", "Harga", "Total Harga"};
+            String[] columnNames = {"ID", "Nama", "Kelas", "Tujuan", "Tanggal_Berangkat", "Jam", "Jumlah", "Harga", "Total Harga"};
             Object[][] data = new Object[100][9]; // Membuat Array 2D untuk Menyimpan Data Tiket
 
             int i = 0;
@@ -614,7 +623,7 @@ public class TiketPesawat {
                 data[i][1] = r.getString("Nama");
                 data[i][2] = r.getString("Kelas");
                 data[i][3] = r.getString("Tujuan");
-                data[i][4] = r.getString("Tanggal");
+                data[i][4] = r.getString("Tanggal_Berangkat");
                 data[i][5] = r.getInt("Jam");
                 data[i][6] = r.getInt("Jumlah");
                 data[i][7] = r.getInt("Harga");
@@ -635,7 +644,7 @@ public class TiketPesawat {
 
             /** Membuat ScrollPane untuk Menampilkan Data Tiket */
             JScrollPane scrollPane = new JScrollPane(table);
-            scrollPane.setPreferredSize(new java.awt.Dimension(800, 400)); // Ukuran ScrollPane
+            scrollPane.setPreferredSize(new java.awt.Dimension(1000, 400)); // Ukuran ScrollPane
 
             /** Menampilkan GUI */
             JOptionPane.showMessageDialog(null, scrollPane, "Data Tiket", JOptionPane.PLAIN_MESSAGE);
