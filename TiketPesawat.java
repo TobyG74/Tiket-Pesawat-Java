@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
-public class TiketPesawat extends JFrame {
+public class TiketPesawat {
     private static final String DATABASE_PATH = "./tiketPesawat.db"; // Lokasi Database
     private static String username = "admin"; // Login Admin dengan username default (admin)
     private static String password = "admin"; // Login Admin dengan password default (admin)
@@ -134,7 +134,7 @@ public class TiketPesawat extends JFrame {
         /** Membuat Variable untuk Format Tanggal */
         String formatJam = String.valueOf(jam < 10 ? "0" + jam : jam) + ":00";
         String formatBulan = String.valueOf(date.get(Calendar.MONTH) + 1 < 10 ? "0" + (date.get(Calendar.MONTH) + 1) : (date.get(Calendar.MONTH) + 1));
-        String formatTanggal = String.valueOf(date.get(Calendar.DAY_OF_MONTH) < 10 ? "0" + tanggal.split(" ")[0] : tanggal.split(" ")[0]);
+        String formatTanggal = Integer.parseInt(tanggal.split(" ")[0]) < 10 ? "0" + tanggal.split(" ")[0] : tanggal.split(" ")[0];
         String formatTanggal2 = date.get(Calendar.YEAR) + "-" + formatBulan + "-" + formatTanggal;
 
         /** Parsing Waktu Keberangkatan dan Waktu Sekarang */
